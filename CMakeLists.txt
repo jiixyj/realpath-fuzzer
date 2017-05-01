@@ -18,8 +18,16 @@ target_compile_definitions(realpath_obsd PRIVATE
   SYMLOOP_MAX=32
 )
 
+add_library(realpath_nbsd realpath_nbsd.c)
+target_compile_definitions(realpath_nbsd PRIVATE
+  realpath=fuzz_realpath
+)
+
 add_executable(realpath_fuzzer realpath_fuzzer.cpp)
 target_link_libraries(realpath_fuzzer realpath)
 
 add_executable(realpath_fuzzer_obsd realpath_fuzzer.cpp)
 target_link_libraries(realpath_fuzzer_obsd realpath_obsd)
+
+add_executable(realpath_fuzzer_nbsd realpath_fuzzer.cpp)
+target_link_libraries(realpath_fuzzer_nbsd realpath_nbsd)

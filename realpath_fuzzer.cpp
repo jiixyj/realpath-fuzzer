@@ -31,8 +31,15 @@ extern "C" char * __real_getcwd(char *buf, size_t size);
 extern "C" char *
 __wrap_getcwd(char *buf, size_t size)
 {
-	if (RANDOMIZE && !(rand() % RANDOMIZE)) {
+	int r = rand() % RANDOMIZE;
+	if (r <= 1) {
 		return NULL;
+	} else if (r <= 10) {
+		if (strlcpy(buf, "/", size) >= size) {
+			errno = ERANGE;
+			return NULL;
+		}
+		return buf;
 	} else {
 		if (strlcpy(buf, "/tmp", size) >= size) {
 			errno = ERANGE;
