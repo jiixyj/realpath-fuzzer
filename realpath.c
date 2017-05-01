@@ -32,10 +32,10 @@ static char sccsid[] = "@(#)realpath.c	8.1 (Berkeley) 2/16/94";
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD$");
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
