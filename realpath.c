@@ -223,7 +223,7 @@ realpath(const char * __restrict path, char * __restrict resolved)
 				}
 				left_len = strlcat(symlink, left,
 				    sizeof(symlink));
-				if (left_len >= sizeof(left)) {
+				if (left_len >= sizeof(symlink)) {
 					if (m)
 						free(resolved);
 					errno = ENAMETOOLONG;
