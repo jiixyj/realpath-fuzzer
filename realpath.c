@@ -117,7 +117,7 @@ realpath(const char * __restrict path, char * __restrict resolved)
 
 		assert(sizeof(next_token) >= sizeof(left));
 
-		next_token_len = p ? (size_t) (p - left) : left_len;
+		next_token_len = p ? p - left : left_len;
 		memcpy(next_token, left, next_token_len);
 		next_token[next_token_len] = '\0';
 
@@ -154,7 +154,7 @@ realpath(const char * __restrict path, char * __restrict resolved)
 				resolved[resolved_len - 1] = '\0';
 				q = strrchr(resolved, '/') + 1;
 				*q = '\0';
-				resolved_len = (size_t) (q - resolved);
+				resolved_len = q - resolved;
 			}
 			continue;
 		}
@@ -182,7 +182,7 @@ realpath(const char * __restrict path, char * __restrict resolved)
 				return (NULL);
 			}
 			slen = readlink(resolved, symlink, sizeof(symlink));
-			if (slen <= 0 || (size_t) slen >= sizeof(symlink)) {
+			if (slen <= 0 || slen >= sizeof(symlink)) {
 				if (m)
 					free(resolved);
 				if (slen < 0) {
@@ -202,7 +202,7 @@ realpath(const char * __restrict path, char * __restrict resolved)
 				/* Strip the last path component. */
 				q = strrchr(resolved, '/') + 1;
 				*q = '\0';
-				resolved_len = (size_t) (q - resolved);
+				resolved_len = q - resolved;
 			}
 
 			/*
@@ -212,7 +212,7 @@ realpath(const char * __restrict path, char * __restrict resolved)
 			 */
 			if (p != NULL) {
 				if (symlink[slen - 1] != '/') {
-					if ((size_t) (slen + 1) >= sizeof(symlink)) {
+					if (slen + 1 >= sizeof(symlink)) {
 						if (m)
 							free(resolved);
 						errno = ENAMETOOLONG;
