@@ -35,10 +35,13 @@ __FBSDID("$FreeBSD$");
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include "namespace.h"
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "un-namespace.h"
 
 /*
  * Find the real name of path, by removing all ".", ".." and symlink
@@ -46,13 +49,14 @@ __FBSDID("$FreeBSD$");
  * in which case the path which caused trouble is left in (resolved).
  */
 char *
-__wrap_realpath(const char * __restrict path, char * __restrict resolved)
+realpath(const char * __restrict path, char * __restrict resolved)
 {
 	struct stat sb;
-	char *p, *q, *s;
-	size_t left_len, resolved_len;
+	char *p, *q;
+	size_t left_len, resolved_len, next_token_len;
 	unsigned symlinks;
-	int m, slen;
+	int m;
+	ssize_t slen;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
 
 	if (path == NULL) {
@@ -91,7 +95,8 @@ __wrap_realpath(const char * __restrict path, char * __restrict resolved)
 		resolved_len = strlen(resolved);
 		left_len = strlcpy(left, path, sizeof(left));
 	}
-	if (left_len >= sizeof(left) || resolved_len >= PATH_MAX) {
+
+	if (left_len >= sizeof(left)) {
 		if (m)
 			free(resolved);
 		errno = ENAMETOOLONG;
@@ -102,23 +107,28 @@ __wrap_realpath(const char * __restrict path, char * __restrict resolved)
 	 * Iterate over path components in `left'.
 	 */
 	while (left_len != 0) {
+		assert(left[left_len] == '\0');
+
 		/*
 		 * Extract the next path component and adjust `left'
 		 * and its length.
 		 */
 		p = strchr(left, '/');
-		s = p ? p : left + left_len;
-		if (s - left >= sizeof(next_token)) {
-			if (m)
-				free(resolved);
-			errno = ENAMETOOLONG;
-			return (NULL);
+
+		assert(sizeof(next_token) >= sizeof(left));
+
+		next_token_len = p ? (size_t) (p - left) : left_len;
+		memcpy(next_token, left, next_token_len);
+		next_token[next_token_len] = '\0';
+
+		if (p != NULL) {
+			left_len -= next_token_len + 1;
+			memmove(left, p + 1, left_len + 1);
+		} else {
+			left[0] = '\0';
+			left_len = 0;
 		}
-		memcpy(next_token, left, s - left);
-		next_token[s - left] = '\0';
-		left_len -= s - left;
-		if (p != NULL)
-			memmove(left, s + 1, left_len + 1);
+
 		if (resolved[resolved_len - 1] != '/') {
 			if (resolved_len + 1 >= PATH_MAX) {
 				if (m)
@@ -144,7 +154,7 @@ __wrap_realpath(const char * __restrict path, char * __restrict resolved)
 				resolved[resolved_len - 1] = '\0';
 				q = strrchr(resolved, '/') + 1;
 				*q = '\0';
-				resolved_len = q - resolved;
+				resolved_len = (size_t) (q - resolved);
 			}
 			continue;
 		}
@@ -171,22 +181,28 @@ __wrap_realpath(const char * __restrict path, char * __restrict resolved)
 				errno = ELOOP;
 				return (NULL);
 			}
-			slen = readlink(resolved, symlink, sizeof(symlink) - 1);
-			if (slen < 0) {
+			slen = readlink(resolved, symlink, sizeof(symlink));
+			if (slen <= 0 || (size_t) slen >= sizeof(symlink)) {
 				if (m)
 					free(resolved);
+				if (slen < 0) {
+					/* keep errno from readlink(2) call */
+				} else if (slen == 0) {
+					errno = ENOENT;
+				} else {
+					errno = ENAMETOOLONG;
+				}
 				return (NULL);
 			}
 			symlink[slen] = '\0';
 			if (symlink[0] == '/') {
 				resolved[1] = 0;
 				resolved_len = 1;
-			} else if (resolved_len > 1) {
+			} else {
 				/* Strip the last path component. */
-				resolved[resolved_len - 1] = '\0';
 				q = strrchr(resolved, '/') + 1;
 				*q = '\0';
-				resolved_len = q - resolved;
+				resolved_len = (size_t) (q - resolved);
 			}
 
 			/*
@@ -196,7 +212,7 @@ __wrap_realpath(const char * __restrict path, char * __restrict resolved)
 			 */
 			if (p != NULL) {
 				if (symlink[slen - 1] != '/') {
-					if (slen + 1 >= sizeof(symlink)) {
+					if ((size_t) (slen + 1) >= sizeof(symlink)) {
 						if (m)
 							free(resolved);
 						errno = ENAMETOOLONG;
