@@ -46,7 +46,7 @@ __FBSDID("$FreeBSD$");
  * in which case the path which caused trouble is left in (resolved).
  */
 char *
-realpath(const char * __restrict path, char * __restrict resolved)
+__wrap_realpath(const char * __restrict path, char * __restrict resolved)
 {
 	struct stat sb;
 	char *p, *q, *s;
