@@ -12,5 +12,14 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WRAP_FLAGS}")
 add_library(realpath realpath.c)
 target_compile_definitions(realpath PRIVATE realpath=fuzz_realpath)
 
+add_library(realpath_obsd realpath_obsd.c)
+target_compile_definitions(realpath_obsd PRIVATE
+  realpath=fuzz_realpath
+  SYMLOOP_MAX=32
+)
+
 add_executable(realpath_fuzzer realpath_fuzzer.cpp)
 target_link_libraries(realpath_fuzzer realpath)
+
+add_executable(realpath_fuzzer_obsd realpath_fuzzer.cpp)
+target_link_libraries(realpath_fuzzer_obsd realpath_obsd)
