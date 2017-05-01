@@ -47,8 +47,14 @@ extern "C" ssize_t
 __wrap_readlink(const char *path, char *buf, size_t bufsiz)
 {
 	int r = rand() % RANDOMIZE;
-	if (r <= 5) {
+	if (r <= 1) {
 		errno = EIO;
+		return -1;
+	} else if (r <= 3) {
+		errno = EINVAL;
+		return -1;
+	} else if (r <= 5) {
+		errno = ENOENT;
 		return -1;
 	} else if (r <= 6) {
 		return 0;
