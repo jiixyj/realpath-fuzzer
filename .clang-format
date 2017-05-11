@@ -1,0 +1,20 @@
+BasedOnStyle: LLVM
+AlignAfterOpenBracket: DontAlign
+AlignOperands: false
+AlignEscapedNewlinesLeft: true
+AlignTrailingComments: false
+AlwaysBreakAfterDefinitionReturnType: All
+BraceWrapping:
+  AfterFunction: true
+BreakBeforeBraces: Custom
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: false
+ColumnLimit: 79
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: false
+ExperimentalAutoDetectBinPacking: true
+IndentWidth: 8
+MaxEmptyLinesToKeep: 2
+SortIncludes: false
+TabWidth: 8
+UseTab: ForIndentation
