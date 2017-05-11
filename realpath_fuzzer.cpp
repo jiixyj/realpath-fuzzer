@@ -31,6 +31,7 @@ extern "C" char * __real_getcwd(char *buf, size_t size);
 extern "C" char *
 __wrap_getcwd(char *buf, size_t size)
 {
+#if RANDOMIZE
 	int r = rand() % RANDOMIZE;
 	if (r <= 1) {
 		return NULL;
@@ -47,12 +48,16 @@ __wrap_getcwd(char *buf, size_t size)
 		}
 		return buf;
 	}
+#else
+	return __real_getcwd(buf, size);
+#endif
 }
 
 extern "C" ssize_t __real_readlink(const char *path, char *buf, size_t bufsiz);
 extern "C" ssize_t
 __wrap_readlink(const char *path, char *buf, size_t bufsiz)
 {
+#if RANDOMIZE
 	int r = rand() % RANDOMIZE;
 	if (r <= 1) {
 		errno = EIO;
@@ -85,12 +90,16 @@ __wrap_readlink(const char *path, char *buf, size_t bufsiz)
 		errno = EIO;
 		return -1;
 	}
+#else
+	return __real_readlink(path, buf, bufsiz);
+#endif
 }
 
 extern "C" int __real_lstat(const char *path, struct stat *sb);
 extern "C" int
 __wrap_lstat(const char *path, struct stat *sb)
 {
+#if RANDOMIZE
 	int r = rand() % RANDOMIZE;
 	if (r == 0) {
 		errno = EIO;
@@ -105,6 +114,9 @@ __wrap_lstat(const char *path, struct stat *sb)
 		sb->st_mode = 0120000;
 		return 0;
 	}
+#else
+	return __real_lstat(path, sb);
+#endif
 }
 
 
