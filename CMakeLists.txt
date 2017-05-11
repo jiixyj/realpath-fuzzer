@@ -5,7 +5,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(ATFC REQUIRED IMPORTED_TARGET atf-c)
 
 set(WRAP_FLAGS "-Wl,--wrap=malloc -Wl,--wrap=getcwd -Wl,--wrap=readlink -Wl,--wrap=lstat")
-set(FUZZER_FLAGS "-fsanitize=fuzzer")
+set(FUZZER_FLAGS "-fsanitize=fuzzer,address")
 set(ASAN_FLAGS "-fsanitize=address")
 
 
