@@ -34,6 +34,7 @@ __RCSID("$NetBSD: t_realpath.c,v 1.2 2012/03/27 07:54:58 njoly Exp $");
 #include <sys/param.h>
 
 #include <atf-c.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,12 +142,69 @@ ATF_TC_BODY(realpath_symlink, tc)
 	ATF_REQUIRE(unlink(slnk) == 0);
 }
 
+ATF_TC(realpath_buffer_overflow);
+ATF_TC_HEAD(realpath_buffer_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test for out of bounds read from 'left' array "
+	    "(compile with '-fsanitize=address')");
+}
+
+ATF_TC_BODY(realpath_buffer_overflow, tc)
+{
+	char path[MAXPATHLEN] = { 0 };
+	char resb[MAXPATHLEN] = { 0 };
+	size_t i;
+
+	path[0] = 'a';
+	path[1] = '/';
+	for (i = 2; i < sizeof(path) - 1; ++i) {
+		path[i] = 'a';
+	}
+
+	ATF_REQUIRE(realpath(path, resb) == NULL);
+}
+
+ATF_TC(realpath_empty_symlink);
+ATF_TC_HEAD(realpath_empty_symlink, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test for correct behavior when encountering empty symlinks");
+}
+
+ATF_TC_BODY(realpath_empty_symlink, tc)
+{
+	char path[MAXPATHLEN] = { 0 };
+	char slnk[MAXPATHLEN] = { 0 };
+	char resb[MAXPATHLEN] = { 0 };
+	int fd;
+
+	(void)strlcat(slnk, "empty_symlink", sizeof(slnk));
+
+	ATF_REQUIRE(symlink("", slnk) == 0);
+
+	fd = open("aaa", O_RDONLY | O_CREAT, 0600);
+
+	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE(close(fd) == 0);
+
+	(void)strlcat(path, "empty_symlink", sizeof(slnk));
+	(void)strlcat(path, "/aaa", sizeof(slnk));
+
+	ATF_REQUIRE_ERRNO(ENOENT, realpath(path, resb) == NULL);
+
+	ATF_REQUIRE(unlink("aaa") == 0);
+	ATF_REQUIRE(unlink(slnk) == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, realpath_basic);
 	ATF_TP_ADD_TC(tp, realpath_huge);
 	ATF_TP_ADD_TC(tp, realpath_symlink);
+	ATF_TP_ADD_TC(tp, realpath_buffer_overflow);
+	ATF_TP_ADD_TC(tp, realpath_empty_symlink);
 
 	return atf_no_error();
 }
